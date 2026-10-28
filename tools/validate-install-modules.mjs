@@ -10,7 +10,7 @@
  * without an installer contract that distinguishes source paths from destination paths.
  */
 import { readFileSync, existsSync } from "node:fs";
-import { dirname, resolve, join } from "node:path";
+import { dirname, resolve, join, relative, isAbsolute, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -64,7 +64,12 @@ for (const [index, module] of manifest.modules.entries()) {
     if (!sourcePath.startsWith("skills/")) continue;
 
     const normalized = resolve(repoRoot, sourcePath);
-    if (!normalized.startsWith(repoRoot + "/")) {
+    const relativePath = relative(repoRoot, normalized);
+    if (
+      relativePath === ".." ||
+      relativePath.startsWith(`..${sep}`) ||
+      isAbsolute(relativePath)
+    ) {
       fail(`Skill path escapes repository root: ${sourcePath}`);
       continue;
     }
